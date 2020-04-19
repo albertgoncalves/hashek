@@ -59,7 +59,9 @@ build_all () {
             -std=gnu99 \
             -O1 \
             -lm \
+            -g \
             "${FLAGS[@]}" \
+            primes.c \
             hash_table.c \
             main.c \
             -o "$TARGET"

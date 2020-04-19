@@ -9,8 +9,10 @@ typedef struct {
 } ht_item_t;
 
 typedef struct {
+    size_t      base;
     size_t      size;
     size_t      count;
+    size_t      collisions;
     ht_item_t** items;
 } ht_hash_table_t;
 
