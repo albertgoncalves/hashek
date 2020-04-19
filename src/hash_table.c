@@ -99,15 +99,15 @@ void ht_delete(ht_hash_table_t* table, const char* key) {
         if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
             free_item(item);
             table->items[index] = &NULL_ITEM;
+            --(table->count);
         }
         index = double_hash(key, table->size, i);
         item  = table->items[index];
     }
-    --(table->count);
 }
 
 void ht_pretty_print(ht_hash_table_t* table) {
-    printf("{\n");
+    printf(".size : %zu\n.count: %zu\n.items: {\n", table->size, table->count);
     for (size_t i = 0; i < table->size; ++i) {
         ht_item_t* item = table->items[i];
         if (item == &NULL_ITEM) {

@@ -5,8 +5,8 @@
 
 /* NOTE: Based on `https://github.com/jamesroutley/write-a-hash-table`. */
 
-ht_hash_table_t* TABLE;
-char*            RESULT;
+static ht_hash_table_t* TABLE;
+static char*            RESULT;
 
 #define DEBUG_SEARCH(key)                                            \
     RESULT = ht_search(TABLE, key);                                  \
@@ -59,9 +59,11 @@ int main(void) {
         ht_insert(TABLE, "foo", "BAR");
         ht_insert(TABLE, "foo", "bar");
         ht_insert(TABLE, "baz", "jazz");
+        ht_insert(TABLE, "FOO", "BAR");
         ht_pretty_print(TABLE);
         DEBUG_SEARCH("foo");
         DEBUG_SEARCH("baz");
+        DEBUG_SEARCH("FOO");
         printf("\n");
     }
     ht_destroy(TABLE);
