@@ -5,11 +5,30 @@
 
 #include "hash_table.h"
 
-#define NEW_TABLE_SIZE (size_t)53;
-#define PRIME_A        157.0f
-#define PRIME_B        163.0f
+static const size_t NEW_TABLE_SIZE = 53;
+static const double PRIME_A        = 157.0f;
+static const double PRIME_B        = 163.0f;
 
 static ht_item_t NULL_ITEM = {NULL, NULL};
+
+static size_t get_hash(const char* string, double seed, size_t table_size) {
+    uint64_t       hash = 0;
+    const uint64_t ts   = table_size;
+    const size_t   n    = strlen(string);
+    for (size_t i = 0; i < n; ++i) {
+        hash += (uint64_t)(pow(seed, (double)(n - (i + 1))) * string[i]);
+        hash %= ts;
+    }
+    return (size_t)hash;
+}
+
+static size_t get_double_hash(const char* string,
+                              size_t      table_size,
+                              size_t      k) {
+    const uint64_t hash_a = get_hash(string, PRIME_A, table_size);
+    const uint64_t hash_b = (get_hash(string, PRIME_B, table_size) + 1) * k;
+    return (hash_a + hash_b) % table_size;
+}
 
 static ht_item_t* new_item(const char* key, const char* value) {
     ht_item_t* item = malloc(sizeof(ht_item_t));
@@ -22,26 +41,6 @@ static void free_item(ht_item_t* item) {
     free(item->key);
     free(item->value);
     free(item);
-}
-
-static size_t hash(const char*  string,
-                   const double seed,
-                   const size_t table_size) {
-    uint64_t     hash = 0;
-    const size_t n    = strlen(string);
-    for (size_t i = 0; i < n; ++i) {
-        hash += (uint64_t)(pow(seed, (double)(n - (i + 1))) * string[i]);
-        hash = hash % (uint64_t)table_size;
-    }
-    return (size_t)hash;
-}
-
-static size_t double_hash(const char*  string,
-                          const size_t table_size,
-                          const size_t k) {
-    return (hash(string, PRIME_A, table_size) +
-            (k * (hash(string, PRIME_B, table_size) + 1))) %
-           table_size;
 }
 
 ht_hash_table_t* ht_new(void) {
@@ -64,7 +63,7 @@ void ht_destroy(ht_hash_table_t* table) {
 }
 
 void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
-    size_t     index = double_hash(key, table->size, 0);
+    size_t     index = get_double_hash(key, table->size, 0);
     ht_item_t* item  = table->items[index];
     for (size_t i = 1; (item != NULL) && (item != &NULL_ITEM); ++i) {
         if (strcmp(item->key, key) == 0) {
@@ -72,7 +71,7 @@ void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
             table->items[index] = new_item(key, value);
             return;
         }
-        index = double_hash(key, table->size, i);
+        index = get_double_hash(key, table->size, i);
         item  = table->items[index];
     }
     table->items[index] = new_item(key, value);
@@ -80,20 +79,20 @@ void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
 }
 
 char* ht_search(ht_hash_table_t* table, const char* key) {
-    size_t     index = double_hash(key, table->size, 0);
+    size_t     index = get_double_hash(key, table->size, 0);
     ht_item_t* item  = table->items[index];
     for (size_t i = 1; item != NULL; ++i) {
         if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
             return item->value;
         }
-        index = double_hash(key, table->size, i);
+        index = get_double_hash(key, table->size, i);
         item  = table->items[index];
     }
     return NULL;
 }
 
 void ht_delete(ht_hash_table_t* table, const char* key) {
-    size_t     index = double_hash(key, table->size, 0);
+    size_t     index = get_double_hash(key, table->size, 0);
     ht_item_t* item  = table->items[index];
     for (size_t i = 1; item != NULL; ++i) {
         if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
@@ -101,7 +100,7 @@ void ht_delete(ht_hash_table_t* table, const char* key) {
             table->items[index] = &NULL_ITEM;
             --(table->count);
         }
-        index = double_hash(key, table->size, i);
+        index = get_double_hash(key, table->size, i);
         item  = table->items[index];
     }
 }
