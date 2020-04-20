@@ -1,81 +1,74 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
+#include "exit.h"
 #include "hash_table.h"
 
 /* NOTE: Based on `https://github.com/jamesroutley/write-a-hash-table`. */
 
-static ht_hash_table_t* TABLE;
-static char*            RESULT;
+#define TEST_KEY_VALUE(table, key, value) \
+    EXIT_IF(strcmp(ht_search(table, key), value) != 0);
 
-#define PRINT_SEARCH(key)                                            \
-    RESULT = ht_search(TABLE, key);                                  \
-    if (RESULT != NULL) {                                            \
-        printf("ht_search(TABLE, \"%s\") -> \"%s\"\n", key, RESULT); \
-    } else {                                                         \
-        printf("ht_search(TABLE, \"%s\") -> NULL\n", key);           \
-    }
+#define TEST_KEY_NULL(table, key) EXIT_IF(ht_search(table, key) != NULL);
+
+#define PRINT_TABLE(table)  \
+    ht_pretty_print(table); \
+    printf("\n");
 
 int main(void) {
-    TABLE = ht_new(4);
+    ht_hash_table_t* table = ht_new(2);
     {
-        ht_insert(TABLE, "foo", "foo");
-        ht_insert(TABLE, "baz", "baz");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        PRINT_SEARCH("baz");
-        printf("\n");
+        ht_insert(table, "foo", "bar");
+        ht_insert(table, "baz", "jazz");
+        PRINT_TABLE(table);
+        TEST_KEY_VALUE(table, "foo", "bar");
+        TEST_KEY_VALUE(table, "baz", "jazz");
     }
     {
-        ht_insert(TABLE, "foo", "foo2");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        printf("\n");
+        ht_insert(table, "foo", "bar2");
+        PRINT_TABLE(table);
+        TEST_KEY_VALUE(table, "foo", "bar2");
     }
     {
-        ht_delete(TABLE, "baz");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        PRINT_SEARCH("baz");
-        printf("\n");
+        ht_delete(table, "baz");
+        PRINT_TABLE(table);
+        TEST_KEY_NULL(table, "baz");
     }
     {
-        ht_insert(TABLE, "baz", "baz2");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        PRINT_SEARCH("baz");
-        printf("\n");
+        ht_insert(table, "baz", "jazz2");
+        PRINT_TABLE(table);
+        TEST_KEY_VALUE(table, "baz", "jazz2");
     }
     {
-        ht_delete(TABLE, "foo");
-        ht_delete(TABLE, "bar");
-        ht_delete(TABLE, "baz");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        PRINT_SEARCH("baz");
-        printf("\n");
+        ht_delete(table, "foo");
+        ht_delete(table, "bar");
+        ht_delete(table, "baz");
+        PRINT_TABLE(table);
+        TEST_KEY_NULL(table, "foo");
+        TEST_KEY_NULL(table, "bar");
+        TEST_KEY_NULL(table, "baz");
     }
     {
-        ht_insert(TABLE, "foo", "foo3");
-        ht_insert(TABLE, "foo", "foo4");
-        ht_insert(TABLE, "bar", "bar");
-        ht_insert(TABLE, "baz", "baz3");
-        ht_insert(TABLE, "jazz", "jazz");
-        ht_insert(TABLE, "FOO", "FOO");
-        ht_insert(TABLE, "BAR", "BAR");
-        ht_insert(TABLE, "BAZ", "BAZ");
-        ht_insert(TABLE, "JAZZ", "JAZZ");
-        ht_pretty_print(TABLE);
-        PRINT_SEARCH("foo");
-        PRINT_SEARCH("bar");
-        PRINT_SEARCH("baz");
-        PRINT_SEARCH("jazz");
-        PRINT_SEARCH("FOO");
-        PRINT_SEARCH("BAR");
-        PRINT_SEARCH("BAZ");
-        PRINT_SEARCH("JAZZ");
-        printf("\n");
+        ht_insert(table, "foo", "bar3");
+        TEST_KEY_VALUE(table, "foo", "bar3");
+        ht_insert(table, "foo", "bar4");
+        ht_insert(table, "bar", "baz");
+        ht_insert(table, "baz", "jazz3");
+        ht_insert(table, "jazz", "foo");
+        ht_insert(table, "FOO", "BAR");
+        ht_insert(table, "BAR", "BAZ");
+        ht_insert(table, "BAZ", "JAZZ");
+        ht_insert(table, "JAZZ", "FOO");
+        PRINT_TABLE(table);
+        TEST_KEY_VALUE(table, "foo", "bar4");
+        TEST_KEY_VALUE(table, "bar", "baz");
+        TEST_KEY_VALUE(table, "jazz", "foo");
+        TEST_KEY_VALUE(table, "FOO", "BAR");
+        TEST_KEY_VALUE(table, "BAR", "BAZ");
+        TEST_KEY_VALUE(table, "BAZ", "JAZZ");
+        TEST_KEY_VALUE(table, "JAZZ", "FOO");
     }
-    ht_destroy(TABLE);
+    ht_destroy(table);
     return EXIT_SUCCESS;
 }
