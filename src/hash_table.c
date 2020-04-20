@@ -45,7 +45,7 @@ static void free_item(ht_item_t* item) {
 ht_hash_table_t* ht_new(size_t base) {
     ht_hash_table_t* table = malloc(sizeof(ht_hash_table_t));
     EXIT_IF(table == NULL);
-    table->base       = base;
+    table->base       = base < 4 ? 4 : base;
     table->size       = next_prime(base);
     table->count      = 0;
     table->collisions = 0;
@@ -96,7 +96,7 @@ static void resize(ht_hash_table_t* table, size_t base) {
 
 void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
     if (RESIZE_UP < ((table->count * 100) / table->size)) {
-        resize(table, table->base << 2);
+        resize(table, table->base << 1);
     }
     const size_t size = table->size;
     size_t       hash = ((size_t)get_hash(key)) % size;
