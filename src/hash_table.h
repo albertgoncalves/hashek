@@ -16,13 +16,13 @@ typedef struct {
     ht_item_t** items;
 } ht_hash_table_t;
 
-ht_hash_table_t* ht_new(void);
+ht_hash_table_t* ht_new(size_t);
 void             ht_destroy(ht_hash_table_t*);
 
 void  ht_insert(ht_hash_table_t*, const char*, const char*);
 void  ht_delete(ht_hash_table_t*, const char*);
-char* ht_search(ht_hash_table_t*, const char*);
+char* ht_search(const ht_hash_table_t*, const char*);
 
-void ht_pretty_print(ht_hash_table_t*);
+void ht_pretty_print(const ht_hash_table_t*);
 
 #endif

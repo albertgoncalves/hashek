@@ -6,8 +6,7 @@
 #include "hash_table.h"
 #include "primes.h"
 
-static const size_t INIT_BASE = 2;
-static const size_t RESIZE_UP = 50;
+static const size_t RESIZE_UP = 64;
 
 static const char* BOLD_PURPLE    = "\033[1;35m";
 static const char* BOLD           = "\033[1m";
@@ -34,24 +33,18 @@ static const char* CLOSE          = "\033[0m";
 
 static ht_item_t NULL_ITEM = {NULL, NULL};
 
-// static size_t get_hash(const char* string, size_t table_size) {
-//     uint64_t hash = 5381;
-//     const size_t   n    = strlen(string);
-//     for (size_t i = 0; i < n; ++i) {
-//         hash = ((hash << 5) + hash) + (uint64_t)string[i];
-//     }
-//     return ((size_t)hash) % table_size;
-// }
-
-static size_t get_hash(const char* string, size_t table_size) {
-    uint64_t       hash = 0;
-    const uint64_t size = table_size;
-    const size_t   n    = strlen(string);
-    for (size_t i = 0; i < n; ++i) {
-        hash += (uint64_t)(powf(163.0f, (float)(n - (i + 1))) * string[i]);
-        hash %= size;
+static uint32_t get_hash(const char* string) {
+    /* NOTE: MurmurHash via
+     * `https://stackoverflow.com/questions/7666509/hash-function-for-string`.
+     */
+    uint32_t hash = 3323198485;
+    for (; *string; ++string) {
+        uint32_t c = (uint32_t)*string;
+        hash ^= c;
+        hash *= 1540483477;
+        hash ^= hash >> 15;
     }
-    return (size_t)hash;
+    return hash;
 }
 
 static ht_item_t* new_item(const char* key, const char* value) {
@@ -72,7 +65,7 @@ static void free_item(ht_item_t* item) {
     free(item);
 }
 
-static ht_hash_table_t* new_sized(size_t base) {
+ht_hash_table_t* ht_new(size_t base) {
     ht_hash_table_t* table = malloc(sizeof(ht_hash_table_t));
     EXIT_IF(table == NULL);
     table->base       = base;
@@ -83,10 +76,6 @@ static ht_hash_table_t* new_sized(size_t base) {
     EXIT_IF(items == NULL);
     table->items = items;
     return table;
-}
-
-ht_hash_table_t* ht_new(void) {
-    return new_sized(INIT_BASE);
 }
 
 void ht_destroy(ht_hash_table_t* table) {
@@ -105,10 +94,10 @@ void ht_destroy(ht_hash_table_t* table) {
 }
 
 static void resize(ht_hash_table_t* table, size_t base) {
-    if (base < INIT_BASE) {
+    if (base < table->base) {
         return;
     }
-    ht_hash_table_t* new_table    = new_sized(base);
+    ht_hash_table_t* new_table    = ht_new(base);
     const size_t     size         = table->size;
     const size_t     count        = table->count;
     size_t           insert_count = 0;
@@ -116,27 +105,27 @@ static void resize(ht_hash_table_t* table, size_t base) {
         ht_item_t* item = table->items[i];
         if ((item != NULL) && (item != &NULL_ITEM)) {
             ht_insert(new_table, item->key, item->value);
+            free_item(item);
             ++insert_count;
         }
     }
     table->base       = base;
     table->size       = new_table->size;
-    new_table->size   = size;
-    ht_item_t** items = table->items;
-    table->items      = new_table->items;
-    new_table->items  = items;
-    ht_destroy(new_table);
+    table->collisions = 0;
+    free(table->items);
+    table->items = new_table->items;
+    free(new_table);
 }
 
 void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
     if (RESIZE_UP < ((table->count * 100) / table->size)) {
-        resize(table, table->base * 2);
+        resize(table, table->base << 2);
     }
     const size_t size = table->size;
-    size_t       hash = get_hash(key, size);
+    size_t       hash = ((size_t)get_hash(key)) % size;
     for (size_t i = 0; i < size; ++i) {
-        size_t index = (hash + i) % size;
-        ht_item_t*   item  = table->items[index];
+        size_t     index = (hash + i) % size;
+        ht_item_t* item  = table->items[index];
         if ((item == NULL) || (item == &NULL_ITEM)) {
             table->items[index] = new_item(key, value);
             ++(table->count);
@@ -150,46 +139,49 @@ void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
     }
 }
 
-char* ht_search(ht_hash_table_t* table, const char* key) {
-    if (table->count == 0) {
-        return NULL;
-    }
-    const size_t size  = table->size;
-    size_t       index = get_hash(key, size);
-    ht_item_t*   item  = table->items[index];
-    for (size_t i = 1; (item != NULL) && (i <= size); ++i) {
-        if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
-            return item->value;
-        }
-        index = (index + 1) % size;
-        item  = table->items[index];
-    }
-    return NULL;
-}
-
 void ht_delete(ht_hash_table_t* table, const char* key) {
     if (table->count == 0) {
         return;
     }
-    const size_t size  = table->size;
-    size_t       index = get_hash(key, size);
-    ht_item_t*   item  = table->items[index];
-    for (size_t i = 1; (item != NULL) && (i <= size) && (table->count != 0);
-         ++i) {
-        if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
+    const size_t size = table->size;
+    size_t       hash = ((size_t)get_hash(key)) % size;
+    for (size_t i = 0; i < size; ++i) {
+        size_t     index = (hash + i) % size;
+        ht_item_t* item  = table->items[index];
+        if (item == NULL) {
+            break;
+        } else if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
             free_item(item);
             table->items[index] = &NULL_ITEM;
             --(table->count);
+            return;
         }
-        index = (index + 1) % size;
-        item  = table->items[index];
     }
 }
 
-void ht_pretty_print(ht_hash_table_t* table) {
+char* ht_search(const ht_hash_table_t* table, const char* key) {
+    if (table->count == 0) {
+        return NULL;
+    }
     const size_t size = table->size;
-    printf(".size       : %zu\n.count      : %zu\n.collisions : %zu\n.items   "
-           "   : {\n",
+    size_t       hash = ((size_t)get_hash(key)) % size;
+    for (size_t i = 0; i < size; ++i) {
+        ht_item_t* item = table->items[(hash + i) % size];
+        if (item == NULL) {
+            break;
+        } else if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
+            return item->value;
+        }
+    }
+    return NULL;
+}
+
+void ht_pretty_print(const ht_hash_table_t* table) {
+    const size_t size = table->size;
+    printf(".size       : %zu\n"
+           ".count      : %zu\n"
+           ".collisions : %zu\n"
+           ".items      : {\n",
            size,
            table->count,
            table->collisions);

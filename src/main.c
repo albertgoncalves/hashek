@@ -17,7 +17,7 @@ static char*            RESULT;
     }
 
 int main(void) {
-    TABLE = ht_new();
+    TABLE = ht_new(4);
     {
         ht_insert(TABLE, "foo", "foo");
         ht_insert(TABLE, "baz", "baz");
