@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,7 +16,7 @@ static uint32_t get_hash(const char* string) {
      */
     uint32_t hash = 3323198485;
     for (; *string; ++string) {
-        uint32_t c = (uint32_t)*string;
+        uint32_t c = (uint32_t)(*string);
         hash ^= c;
         hash *= 1540483477;
         hash ^= hash >> 15;
