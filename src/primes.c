@@ -1,8 +1,9 @@
 #include <math.h>
+#include <stdbool.h>
 
 #include "primes.h"
 
-bool is_prime(size_t value) {
+static bool is_prime(size_t value) {
     if (value < 2) {
         return false;
     } else if (value < 4) {
