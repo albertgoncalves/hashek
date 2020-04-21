@@ -42,16 +42,15 @@ int main(void) {
     }
     {
         ht_delete(table, "foo");
+        ht_insert(table, "foo", "bar3");
         ht_delete(table, "bar");
         ht_delete(table, "baz");
         PRINT_TABLE(table);
-        TEST_KEY_NULL(table, "foo");
+        TEST_KEY_VALUE(table, "foo", "bar3");
         TEST_KEY_NULL(table, "bar");
         TEST_KEY_NULL(table, "baz");
     }
     {
-        ht_insert(table, "foo", "bar3");
-        TEST_KEY_VALUE(table, "foo", "bar3");
         ht_insert(table, "foo", "bar4");
         ht_insert(table, "bar", "baz");
         ht_insert(table, "baz", "jazz3");
