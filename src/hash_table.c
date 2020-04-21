@@ -8,8 +8,6 @@
 
 static const size_t RESIZE_UP = 70;
 
-static ht_item_t NULL_ITEM = {NULL, NULL};
-
 static uint32_t get_hash(const char* string) {
     /* NOTE: MurmurHash via
      * `https://stackoverflow.com/questions/7666509/hash-function-for-string`.
@@ -24,22 +22,13 @@ static uint32_t get_hash(const char* string) {
     return hash;
 }
 
-static ht_item_t* new_item(const char* key, const char* value) {
-    ht_item_t* item = malloc(sizeof(ht_item_t));
+static void set_item(ht_item_t* item, const char* key, const char* value) {
     EXIT_IF(item == NULL);
-    char* item_key = strdup(key);
-    EXIT_IF(item_key == NULL);
-    char* item_value = strdup(value);
-    EXIT_IF(item_value == NULL);
-    item->key   = item_key;
-    item->value = item_value;
-    return item;
-}
-
-static void free_item(ht_item_t* item) {
-    free(item->key);
-    free(item->value);
-    free(item);
+    EXIT_IF(KEY_BUFFER_SIZE <= strlen(key));
+    strcpy(item->key, key);
+    EXIT_IF(VALUE_BUFFER_SIZE <= strlen(value));
+    strcpy(item->value, value);
+    item->alive = true;
 }
 
 ht_hash_table_t* ht_new(size_t base) {
@@ -49,46 +38,35 @@ ht_hash_table_t* ht_new(size_t base) {
     table->size       = next_prime(base);
     table->count      = 0;
     table->collisions = 0;
-    ht_item_t** items = calloc((size_t)table->size, sizeof(ht_item_t*));
+    table->resizes    = 0;
+    ht_item_t* items  = calloc((size_t)table->size, sizeof(ht_item_t));
     EXIT_IF(items == NULL);
     table->items = items;
     return table;
 }
 
 void ht_destroy(ht_hash_table_t* table) {
-    const size_t size       = table->size;
-    const size_t count      = table->count;
-    size_t       free_count = 0;
-    for (size_t i = 0; (i < size) && (free_count < count); ++i) {
-        ht_item_t* item = table->items[i];
-        if ((item != NULL) && (item != &NULL_ITEM)) {
-            free_item(item);
-            ++free_count;
-        }
-    }
     free(table->items);
     free(table);
 }
 
 static void resize(ht_hash_table_t* table, size_t base) {
-    if (base < table->base) {
-        return;
-    }
+    EXIT_IF(base <= table->base);
     ht_hash_table_t* new_table    = ht_new(base);
     const size_t     size         = table->size;
     const size_t     count        = table->count;
     size_t           insert_count = 0;
     for (size_t i = 0; (i < size) && (insert_count < count); ++i) {
-        ht_item_t* item = table->items[i];
-        if ((item != NULL) && (item != &NULL_ITEM)) {
+        ht_item_t* item = &table->items[i];
+        if (item->alive) {
             ht_insert(new_table, item->key, item->value);
-            free_item(item);
             ++insert_count;
         }
     }
     table->base       = base;
     table->size       = new_table->size;
     table->collisions = 0;
+    ++(table->resizes);
     free(table->items);
     table->items = new_table->items;
     free(new_table);
@@ -102,14 +80,13 @@ void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
     size_t       hash = ((size_t)get_hash(key)) % size;
     for (size_t i = 0; i < size; ++i) {
         size_t     index = (hash + i) % size;
-        ht_item_t* item  = table->items[index];
-        if ((item == NULL) || (item == &NULL_ITEM)) {
-            table->items[index] = new_item(key, value);
+        ht_item_t* item  = &(table->items[index]);
+        if (!item->alive) {
+            set_item(&(table->items[index]), key, value);
             ++(table->count);
             return;
         } else if (strcmp(item->key, key) == 0) {
-            free_item(item);
-            table->items[index] = new_item(key, value);
+            set_item(&(table->items[index]), key, value);
             return;
         }
         ++(table->collisions);
@@ -124,12 +101,11 @@ void ht_delete(ht_hash_table_t* table, const char* key) {
     size_t       hash = ((size_t)get_hash(key)) % size;
     for (size_t i = 0; i < size; ++i) {
         size_t     index = (hash + i) % size;
-        ht_item_t* item  = table->items[index];
+        ht_item_t* item  = &table->items[index];
         if (item == NULL) {
             break;
-        } else if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
-            free_item(item);
-            table->items[index] = &NULL_ITEM;
+        } else if ((item->alive) && (strcmp(item->key, key) == 0)) {
+            table->items[index].alive = false;
             --(table->count);
             return;
         }
@@ -143,10 +119,10 @@ char* ht_search(const ht_hash_table_t* table, const char* key) {
     const size_t size = table->size;
     size_t       hash = ((size_t)get_hash(key)) % size;
     for (size_t i = 0; i < size; ++i) {
-        ht_item_t* item = table->items[(hash + i) % size];
+        ht_item_t* item = &table->items[(hash + i) % size];
         if (item == NULL) {
             break;
-        } else if ((item != &NULL_ITEM) && (strcmp(item->key, key) == 0)) {
+        } else if (item->alive && (strcmp(item->key, key) == 0)) {
             return item->value;
         }
     }
@@ -155,21 +131,23 @@ char* ht_search(const ht_hash_table_t* table, const char* key) {
 
 void ht_pretty_print(const ht_hash_table_t* table) {
     const size_t size = table->size;
-    printf(".size       : %zu\n"
+    printf(".base       : %zu\n"
+           ".size       : %zu\n"
            ".count      : %zu\n"
            ".collisions : %zu\n"
+           ".resizes    : %zu\n"
            ".items      : {\n",
+           table->base,
            size,
            table->count,
-           table->collisions);
+           table->collisions,
+           table->resizes);
     for (size_t i = 0; i < size; ++i) {
-        ht_item_t* item = table->items[i];
-        if (item == &NULL_ITEM) {
-            printf("    NULL: NULL,\n");
-        } else if (item != NULL) {
-            printf("    \"%s\": \"%s\",\n", item->key, item->value);
-        } else {
+        ht_item_t* item = &table->items[i];
+        if (!item->alive) {
             printf("    _,\n");
+        } else {
+            printf("    \"%s\": \"%s\",\n", item->key, item->value);
         }
     }
     printf("}\n");

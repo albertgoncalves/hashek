@@ -1,17 +1,24 @@
 #ifndef __HASH_TABLE_H__
 #define __HASH_TABLE_H__
 
+#include <stdbool.h>
+
+#define KEY_BUFFER_SIZE   7
+#define VALUE_BUFFER_SIZE 26
+
 typedef struct {
-    char* key;
-    char* value;
+    char value[VALUE_BUFFER_SIZE];
+    char key[KEY_BUFFER_SIZE];
+    bool alive;
 } ht_item_t;
 
 typedef struct {
-    size_t      base;
-    size_t      size;
-    size_t      count;
-    size_t      collisions;
-    ht_item_t** items;
+    size_t     base;
+    size_t     size;
+    size_t     count;
+    size_t     collisions;
+    size_t     resizes;
+    ht_item_t* items;
 } ht_hash_table_t;
 
 ht_hash_table_t* ht_new(size_t);
