@@ -66,7 +66,7 @@ static void resize(ht_hash_table_t* table, size_t base) {
     table->base       = base;
     table->size       = new_table->size;
     table->collisions = 0;
-    ++(table->resizes);
+    ++table->resizes;
     free(table->items);
     table->items = new_table->items;
     free(new_table);
@@ -80,16 +80,16 @@ void ht_insert(ht_hash_table_t* table, const char* key, const char* value) {
     size_t       hash = ((size_t)get_hash(key)) % size;
     for (size_t i = 0; i < size; ++i) {
         size_t     index = (hash + i) % size;
-        ht_item_t* item  = &(table->items[index]);
+        ht_item_t* item  = &table->items[index];
         if (!item->alive) {
-            set_item(&(table->items[index]), key, value);
-            ++(table->count);
+            set_item(&table->items[index], key, value);
+            ++table->count;
             return;
         } else if (strcmp(item->key, key) == 0) {
-            set_item(&(table->items[index]), key, value);
+            set_item(&table->items[index], key, value);
             return;
         }
-        ++(table->collisions);
+        ++table->collisions;
     }
 }
 
@@ -106,7 +106,7 @@ void ht_delete(ht_hash_table_t* table, const char* key) {
             break;
         } else if ((item->alive) && (strcmp(item->key, key) == 0)) {
             table->items[index].alive = false;
-            --(table->count);
+            --table->count;
             return;
         }
     }

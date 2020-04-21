@@ -17,7 +17,6 @@ in
     linux = mkShell {
         buildInputs = [
             clang_10
-            gdb
             valgrind
         ] ++ shared;
         shellHook = hook;
