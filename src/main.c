@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "exit.h"
@@ -7,8 +5,12 @@
 
 /* NOTE: Based on `https://github.com/jamesroutley/write-a-hash-table`. */
 
-#define TEST_KEY_VALUE(table, key, value) \
-    EXIT_IF(strcmp(ht_search(table, key), value) != 0);
+#define TEST_KEY_VALUE(table, key, value)     \
+    {                                         \
+        char* result = ht_search(table, key); \
+        EXIT_IF(result == NULL);              \
+        EXIT_IF(strcmp(result, value) != 0);  \
+    }
 
 #define TEST_KEY_NULL(table, key) EXIT_IF(ht_search(table, key) != NULL);
 
@@ -17,7 +19,7 @@
     printf("\n");
 
 int main(void) {
-    ht_hash_table_t* table = ht_new(2);
+    ht_table_t* table = ht_new(4);
     {
         ht_insert(table, "foo", "bar");
         ht_insert(table, "baz", "jazz");
