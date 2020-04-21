@@ -63,6 +63,7 @@ int main(void) {
         PRINT_TABLE(table);
         TEST_KEY_VALUE(table, "foo", "bar4");
         TEST_KEY_VALUE(table, "bar", "baz");
+        TEST_KEY_VALUE(table, "baz", "jazz3");
         TEST_KEY_VALUE(table, "jazz", "foo");
         TEST_KEY_VALUE(table, "FOO", "BAR");
         TEST_KEY_VALUE(table, "BAR", "BAZ");
