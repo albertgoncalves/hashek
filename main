@@ -53,19 +53,16 @@ export FLAGS=(
 build_all () {
     cp "$WD/src"/* "$WD/build"
     cd "$WD/build" || exit 1
-    (
-        set -x
-        gcc \
-            -std=gnu99 \
-            -O1 \
-            -lm \
-            -g \
-            "${FLAGS[@]}" \
-            primes.c \
-            hash_table.c \
-            main.c \
-            -o "$TARGET"
-    )
+    gcc \
+        -std=gnu99 \
+        -O1 \
+        -lm \
+        -g \
+        "${FLAGS[@]}" \
+        primes.c \
+        hash_table.c \
+        main.c \
+        -o "$TARGET"
 }
 
 (
@@ -73,7 +70,7 @@ build_all () {
     clang-format -i -verbose "$WD/src"/* 2>&1 | sed 's/\/.*\///g'
     build_all
     end=$(now)
-    python3 -c "print(\"Done! ({:.3f}s)\n\".format(${end} - ${start}))"
+    python3 -c "print(\"Compiled! ({:.3f}s)\n\".format(${end} - ${start}))"
 )
 
 "$TARGET"
