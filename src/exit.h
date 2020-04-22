@@ -4,10 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static const char* BOLD_PURPLE    = "\033[1;35m";
-static const char* BOLD           = "\033[1m";
-static const char* BOLD_UNDERLINE = "\033[1;4m";
-static const char* CLOSE          = "\033[0m";
+#include "term.h"
 
 #define EXIT_IF(condition)                                  \
     if (condition) {                                        \
