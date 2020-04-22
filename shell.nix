@@ -10,4 +10,3 @@ mkShell {
         . .shellhook
     '';
 }
-
