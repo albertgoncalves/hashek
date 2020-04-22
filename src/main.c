@@ -1,5 +1,7 @@
+#include <stdint.h>
 #include <string.h>
-#include <sys/resource.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "exit.h"
 #include "hash_table.h"
@@ -20,11 +22,38 @@
     ht_pretty_print(table); \
     printf("\n");
 
+/* NOTE: See
+ * `https://www.cs.rutgers.edu/~pxk/416/notes/c-tutorials/gettime.html`.
+ */
+#define timespec_t struct timespec
+#define TIME_TO_NS(start, end) \
+    (1000000000l * (end.tv_sec - start.tv_sec)) + end.tv_nsec - start.tv_nsec
+#define BENCH(block)                                           \
+    {                                                          \
+        timespec_t mono_start, mono_end, proc_start, proc_end; \
+        clock_gettime(CLOCK_MONOTONIC, &mono_start);           \
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &proc_start);  \
+        block;                                                 \
+        clock_gettime(CLOCK_MONOTONIC, &mono_end);             \
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &proc_end);    \
+        int64_t mono_ns = TIME_TO_NS(mono_start, mono_end);    \
+        int64_t proc_ns = TIME_TO_NS(proc_start, proc_end);    \
+        printf("%s Benchmark %s\n"                             \
+               "monotonic : %s%8li%s ns\n"                     \
+               "process   : %s%8li%s ns\n",                    \
+               BOLD_INVERSE,                                   \
+               CLOSE,                                          \
+               BOLD,                                           \
+               mono_ns,                                        \
+               CLOSE,                                          \
+               BOLD,                                           \
+               proc_ns,                                        \
+               CLOSE);                                         \
+    }
+
 int main(void) {
-    /* NOTE: See `http://www.cs.tufts.edu/comp/111/examples/Time/getrusage.c`.
-     */
-    struct rusage usage;
-    {
+    BENCH({
+        usleep(1000);
         ht_table_t* table = ht_new(4);
         {
             ht_insert(table, "foo", "bar");
@@ -78,20 +107,6 @@ int main(void) {
             TEST_KEY_VALUE(table, "JAZZ", "FOO");
         }
         ht_destroy(table);
-    }
-    getrusage(RUSAGE_SELF, &usage);
-    printf("================\n"
-           "%s  Time Elapsed  %s\n"
-           "seconds   : %s%ld\n%s"
-           "microsec. : %s%ld\n%s"
-           "================\n",
-           BOLD_INVERSE,
-           CLOSE,
-           BOLD,
-           usage.ru_utime.tv_sec,
-           CLOSE,
-           BOLD,
-           usage.ru_utime.tv_usec,
-           CLOSE);
+    });
     return EXIT_SUCCESS;
 }
