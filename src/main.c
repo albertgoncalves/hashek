@@ -38,7 +38,7 @@
         clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &proc_end);    \
         int64_t mono_ns = TIME_TO_NS(mono_start, mono_end);    \
         int64_t proc_ns = TIME_TO_NS(proc_start, proc_end);    \
-        printf("%s Benchmark %s\n"                             \
+        printf("%s       Benchmark       %s\n"                 \
                "monotonic : %s%8li%s ns\n"                     \
                "process   : %s%8li%s ns\n",                    \
                BOLD_INVERSE,                                   \
