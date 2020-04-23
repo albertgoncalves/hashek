@@ -9,7 +9,7 @@ now () {
 }
 
 export FLAGS=(
-    -Os \
+    -O3 \
     -Wall \
     -Wbad-function-cast \
     -Wcast-align \
@@ -55,13 +55,17 @@ export FLAGS=(
 build_all () {
     cp "$WD/src"/* "$WD/build"
     cd "$WD/build" || exit 1
-    gcc \
-        -lm \
-        "${FLAGS[@]}" \
-        primes.c \
-        hash_table.c \
-        main.c \
-        -o "$TARGET"
+    (
+        set -x
+        gcc \
+            -pg \
+            -lm \
+            "${FLAGS[@]}" \
+            primes.c \
+            hash_table.c \
+            main.c \
+            -o "$TARGET"
+    )
 }
 
 (
