@@ -58,7 +58,6 @@ build_all () {
     (
         set -x
         gcc \
-            -pg \
             -lm \
             "${FLAGS[@]}" \
             primes.c \

@@ -14,7 +14,7 @@
 #define TIME_TO_NS(start, end) \
     (1000000000l * (end.tv_sec - start.tv_sec)) + end.tv_nsec - start.tv_nsec
 
-#define BENCH(n, block)                                           \
+#define BENCH(label, n, block)                                    \
     {                                                             \
         timespec_t mono_start, mono_end, proc_start, proc_end;    \
         SUPPRESS({                                                \
@@ -31,11 +31,12 @@
         double  m           = (double)n;                          \
         double  mono_ns_per = (double)mono_ns / m;                \
         double  proc_ns_per = (double)proc_ns / m;                \
-        printf("%s          Benchmark          %s\n"              \
-               "iterations : %s%9d%s\n"                           \
-               "monotonic  : %s%9.2f%s ns/per\n"                  \
-               "process    : %s%9.2f%s ns/per\n",                 \
+        printf("\n%s%-28s%s\n"                                    \
+               "iter.     : %s%9d%s\n"                            \
+               "monotonic : %s%9.2f%s %sns/per%s\n"               \
+               "process   : %s%9.2f%s %sns/per%s\n",              \
                BOLD_INVERSE,                                      \
+               label,                                             \
                CLOSE,                                             \
                BOLD,                                              \
                n,                                                 \
@@ -43,8 +44,12 @@
                BOLD,                                              \
                mono_ns_per,                                       \
                CLOSE,                                             \
+               DIM,                                               \
+               CLOSE,                                             \
                BOLD,                                              \
                proc_ns_per,                                       \
+               CLOSE,                                             \
+               DIM,                                               \
                CLOSE);                                            \
     }
 

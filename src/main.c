@@ -7,6 +7,7 @@
 
 /* NOTE: Based on `https://github.com/jamesroutley/write-a-hash-table`. */
 
+#define TEST_KEY_NULL(table, key) EXIT_IF(ht_search(table, key) != NULL);
 #define TEST_KEY_VALUE(table, key, value)     \
     {                                         \
         char* result = ht_search(table, key); \
@@ -14,11 +15,30 @@
         EXIT_IF(strcmp(result, value) != 0);  \
     }
 
-#define TEST_KEY_NULL(table, key) EXIT_IF(ht_search(table, key) != NULL);
-
 #define PRINT_TABLE(table)  \
     ht_pretty_print(table); \
     printf("\n");
+
+#define N 10000
+#define WORK(table)                       \
+    {                                     \
+        ht_insert(table, "foo", "bar4");  \
+        ht_insert(table, "bar", "baz");   \
+        ht_insert(table, "baz", "jazz3"); \
+        ht_insert(table, "jazz", "foo");  \
+        ht_insert(table, "FOO", "BAR");   \
+        ht_insert(table, "BAR", "BAZ");   \
+        ht_insert(table, "BAZ", "JAZZ");  \
+        ht_insert(table, "JAZZ", "FOO");  \
+        ht_delete(table, "foo");          \
+        ht_delete(table, "bar");          \
+        ht_delete(table, "baz");          \
+        ht_delete(table, "jazz");         \
+        ht_delete(table, "FOO");          \
+        ht_delete(table, "BAR");          \
+        ht_delete(table, "BAZ");          \
+        ht_delete(table, "JAZZ");         \
+    }
 
 int main(void) {
     {
@@ -76,26 +96,15 @@ int main(void) {
         }
         ht_destroy(table);
     }
-    BENCH(10000, {
+    BENCH("new, work, destroy", N, {
         ht_table_t* table = ht_new(8);
-        ht_insert(table, "foo", "bar");
-        ht_insert(table, "baz", "jazz");
-        ht_insert(table, "foo", "bar2");
-        ht_delete(table, "baz");
-        ht_insert(table, "baz", "jazz2");
-        ht_delete(table, "foo");
-        ht_insert(table, "foo", "bar3");
-        ht_delete(table, "bar");
-        ht_delete(table, "baz");
-        ht_insert(table, "foo", "bar4");
-        ht_insert(table, "bar", "baz");
-        ht_insert(table, "baz", "jazz3");
-        ht_insert(table, "jazz", "foo");
-        ht_insert(table, "FOO", "BAR");
-        ht_insert(table, "BAR", "BAZ");
-        ht_insert(table, "BAZ", "JAZZ");
-        ht_insert(table, "JAZZ", "FOO");
+        WORK(table);
         ht_destroy(table);
     });
+    {
+        ht_table_t* table = ht_new(8);
+        BENCH("work only", N, WORK(table));
+        ht_destroy(table);
+    }
     return EXIT_SUCCESS;
 }
