@@ -17,7 +17,7 @@
 #define BENCH(label, n, block)                                    \
     {                                                             \
         timespec_t mono_start, mono_end, proc_start, proc_end;    \
-        SUPPRESS({                                                \
+        SUPPRESS_STDOUT({                                         \
             clock_gettime(CLOCK_MONOTONIC, &mono_start);          \
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &proc_start); \
             for (size_t _ = 0; _ < n; ++_) {                      \
