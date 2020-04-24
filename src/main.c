@@ -19,7 +19,8 @@
     ht_pretty_print(table); \
     printf("\n");
 
-#define N 10000
+#define BENCH_ITER     10000
+#define NEW_TABLE_BASE 8
 #define WORK(table)                       \
     {                                     \
         ht_insert(table, "foo", "bar4");  \
@@ -96,14 +97,14 @@ int main(void) {
         }
         ht_destroy(table);
     }
-    BENCH("new, work, destroy", N, {
-        ht_table_t* table = ht_new(8);
+    BENCH("new, work, destroy", BENCH_ITER, {
+        ht_table_t* table = ht_new(NEW_TABLE_BASE);
         WORK(table);
         ht_destroy(table);
     });
     {
-        ht_table_t* table = ht_new(8);
-        BENCH("work only", N, WORK(table));
+        ht_table_t* table = ht_new(NEW_TABLE_BASE);
+        BENCH("work only", BENCH_ITER, WORK(table));
         ht_destroy(table);
     }
     return EXIT_SUCCESS;
