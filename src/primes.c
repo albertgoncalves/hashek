@@ -3,7 +3,7 @@
 
 #include "primes.h"
 
-static bool is_prime(size_t value) {
+static bool is_prime(uint32_t value) {
     if (value < 2) {
         return false;
     } else if (value < 4) {
@@ -12,7 +12,7 @@ static bool is_prime(size_t value) {
         return false;
     }
     float v = floorf(sqrtf((float)value));
-    for (size_t i = 3; i <= (size_t)v; i += 2) {
+    for (uint32_t i = 3; i <= (uint32_t)v; i += 2) {
         if ((value % i) == 0) {
             return false;
         }
@@ -20,7 +20,7 @@ static bool is_prime(size_t value) {
     return true;
 }
 
-size_t next_prime(size_t value) {
+uint32_t next_prime(uint32_t value) {
     while (!is_prime(value)) {
         ++value;
     }

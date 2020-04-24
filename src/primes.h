@@ -1,8 +1,8 @@
 #ifndef __PRIMES_H__
 #define __PRIMES_H__
 
-#include <stdio.h>
+#include <stdint.h>
 
-size_t next_prime(size_t x);
+uint32_t next_prime(uint32_t x);
 
 #endif

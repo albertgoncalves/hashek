@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <string.h>
 
 #include "exit.h"
@@ -30,18 +29,18 @@ static void set_item(ht_item_t* item, const char* key, const char* value) {
     item->alive = true;
 }
 
-static void set_table(ht_table_t* table, size_t base) {
+static void set_table(ht_table_t* table, uint32_t base) {
     table->base       = base < BASE_MIN ? BASE_MIN : base;
     table->size       = next_prime(table->base);
     table->count      = 0;
     table->collisions = 0;
     table->resizes    = 0;
-    ht_item_t* items  = calloc((size_t)table->size, sizeof(ht_item_t));
+    ht_item_t* items  = calloc(table->size, sizeof(ht_item_t));
     EXIT_IF(items == NULL);
     table->items = items;
 }
 
-ht_table_t* ht_new(size_t base) {
+ht_table_t* ht_new(uint32_t base) {
     ht_table_t* table = malloc(sizeof(ht_table_t));
     EXIT_IF(table == NULL);
     set_table(table, base);
@@ -53,14 +52,14 @@ void ht_destroy(ht_table_t* table) {
     free(table);
 }
 
-static void resize(ht_table_t* table, size_t base) {
+static void resize(ht_table_t* table, uint32_t base) {
     EXIT_IF(base <= table->base);
     ht_table_t new_table;
     set_table(&new_table, base);
-    const size_t size         = table->size;
-    const size_t count        = table->count;
-    size_t       insert_count = 0;
-    for (size_t i = 0; i < size; ++i) {
+    const uint32_t size         = table->size;
+    const uint32_t count        = table->count;
+    uint32_t       insert_count = 0;
+    for (uint32_t i = 0; i < size; ++i) {
         ht_item_t* item = &table->items[i];
         if (item->alive) {
             ht_insert(&new_table, item->key, item->value);
@@ -81,10 +80,10 @@ void ht_insert(ht_table_t* table, const char* key, const char* value) {
     if (RESIZE_UP < ((table->count * 100) / table->size)) {
         resize(table, table->base << 1);
     }
-    const size_t size = table->size;
-    size_t       hash = ((size_t)get_hash(key)) % size;
-    for (size_t i = 0; i < size; ++i) {
-        size_t     index = (hash + i) % size;
+    const uint32_t size = table->size;
+    uint32_t       hash = get_hash(key) % size;
+    for (uint32_t i = 0; i < size; ++i) {
+        uint32_t   index = (hash + i) % size;
         ht_item_t* item  = &table->items[index];
         if (!item->alive) {
             set_item(item, key, value);
@@ -100,10 +99,10 @@ void ht_insert(ht_table_t* table, const char* key, const char* value) {
 
 void ht_delete(ht_table_t* table, const char* key) {
     if (table->count != 0) {
-        const size_t size = table->size;
-        size_t       hash = ((size_t)get_hash(key)) % size;
-        for (size_t i = 0; i < size; ++i) {
-            size_t     index = (hash + i) % size;
+        const uint32_t size = table->size;
+        uint32_t       hash = (get_hash(key)) % size;
+        for (uint32_t i = 0; i < size; ++i) {
+            uint32_t   index = (hash + i) % size;
             ht_item_t* item  = &table->items[index];
             if (item == NULL) {
                 return;
@@ -118,9 +117,9 @@ void ht_delete(ht_table_t* table, const char* key) {
 
 char* ht_search(const ht_table_t* table, const char* key) {
     if (table->count != 0) {
-        const size_t size = table->size;
-        size_t       hash = ((size_t)get_hash(key)) % size;
-        for (size_t i = 0; i < size; ++i) {
+        const uint32_t size = table->size;
+        uint32_t       hash = (get_hash(key)) % size;
+        for (uint32_t i = 0; i < size; ++i) {
             ht_item_t* item = &table->items[(hash + i) % size];
             if (item == NULL) {
                 break;
@@ -133,19 +132,19 @@ char* ht_search(const ht_table_t* table, const char* key) {
 }
 
 void ht_pretty_print(const ht_table_t* table) {
-    const size_t size = table->size;
-    printf(".base       : %zu\n"
-           ".size       : %zu\n"
-           ".count      : %zu\n"
-           ".collisions : %zu\n"
-           ".resizes    : %zu\n"
+    const uint32_t size = table->size;
+    printf(".base       : %u\n"
+           ".size       : %u\n"
+           ".count      : %u\n"
+           ".resizes    : %u\n"
+           ".collisions : %u\n"
            ".items      : {\n",
            table->base,
            size,
            table->count,
-           table->collisions,
-           table->resizes);
-    for (size_t i = 0; i < size; ++i) {
+           table->resizes,
+           table->collisions);
+    for (uint32_t i = 0; i < size; ++i) {
         ht_item_t* item = &table->items[i];
         if (!item->alive) {
             printf("    _,\n");
