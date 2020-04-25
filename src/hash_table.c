@@ -29,8 +29,8 @@ static void set_item(ht_item_t* item, const char* key, const char* value) {
     item->alive = true;
 }
 
-ht_table_t* ht_new(uint32_t _base) {
-    const uint32_t base = _base < BASE_MIN ? BASE_MIN : _base;
+ht_table_t* ht_new(uint32_t new_base) {
+    const uint32_t base = new_base < BASE_MIN ? BASE_MIN : new_base;
     const uint32_t size = next_prime(base);
     ht_table_t*    table =
         calloc(sizeof(ht_table_t) + (sizeof(ht_item_t) * size), 1);
