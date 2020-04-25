@@ -14,22 +14,18 @@ typedef struct {
 } ht_item_t;
 
 typedef struct {
-    ht_item_t* items;
-    uint32_t   base;
-    uint32_t   size;
-    uint32_t   count;
-    uint32_t   resizes;
-    uint32_t   collisions;
-    char       _[4];
+    uint32_t  base;
+    uint32_t  size;
+    uint32_t  count;
+    uint32_t  resizes;
+    uint32_t  collisions;
+    ht_item_t items[];
 } ht_table_t;
 
 ht_table_t* ht_new(uint32_t);
-void        ht_destroy(ht_table_t*);
-
-void  ht_insert(ht_table_t*, const char*, const char*);
-void  ht_delete(ht_table_t*, const char*);
-char* ht_search(const ht_table_t*, const char*);
-
-void ht_pretty_print(const ht_table_t*);
+ht_table_t* ht_insert(ht_table_t*, const char*, const char*);
+void        ht_delete(ht_table_t*, const char*);
+char*       ht_search(ht_table_t*, const char*);
+void        ht_pretty_print(ht_table_t*);
 
 #endif

@@ -29,72 +29,57 @@ static void set_item(ht_item_t* item, const char* key, const char* value) {
     item->alive = true;
 }
 
-static void set_table(ht_table_t* table, uint32_t base) {
-    table->base       = base < BASE_MIN ? BASE_MIN : base;
-    table->size       = next_prime(table->base);
-    table->count      = 0;
-    table->collisions = 0;
-    table->resizes    = 0;
-    ht_item_t* items  = calloc(table->size, sizeof(ht_item_t));
-    EXIT_IF(items == NULL);
-    table->items = items;
-}
-
-ht_table_t* ht_new(uint32_t base) {
-    ht_table_t* table = malloc(sizeof(ht_table_t));
+ht_table_t* ht_new(uint32_t _base) {
+    const uint32_t base = _base < BASE_MIN ? BASE_MIN : _base;
+    const uint32_t size = next_prime(base);
+    ht_table_t*    table =
+        calloc(sizeof(ht_table_t) + (sizeof(ht_item_t) * size), 1);
     EXIT_IF(table == NULL);
-    set_table(table, base);
+    table->base = base;
+    table->size = size;
     return table;
 }
 
-void ht_destroy(ht_table_t* table) {
-    free(table->items);
-    free(table);
-}
-
-static void resize(ht_table_t* table, uint32_t base) {
+static ht_table_t* resize(ht_table_t* table, uint32_t base) {
     EXIT_IF(base <= table->base);
-    ht_table_t new_table;
-    set_table(&new_table, base);
+    ht_table_t*    new_table    = ht_new(base);
     const uint32_t size         = table->size;
     const uint32_t count        = table->count;
     uint32_t       insert_count = 0;
     for (uint32_t i = 0; i < size; ++i) {
-        ht_item_t* item = &table->items[i];
+        ht_item_t* item = &((*table).items[i]);
         if (item->alive) {
-            ht_insert(&new_table, item->key, item->value);
+            new_table = ht_insert(new_table, item->key, item->value);
             if (count <= ++insert_count) {
                 break;
             }
         }
     }
-    table->base       = base;
-    table->size       = new_table.size;
-    table->collisions = 0;
-    ++table->resizes;
-    free(table->items);
-    table->items = new_table.items;
+    new_table->resizes = table->resizes + 1;
+    free(table);
+    return new_table;
 }
 
-void ht_insert(ht_table_t* table, const char* key, const char* value) {
+ht_table_t* ht_insert(ht_table_t* table, const char* key, const char* value) {
     if (RESIZE_UP < ((table->count * 100) / table->size)) {
-        resize(table, table->base << 1);
+        table = resize(table, table->base << 1);
     }
     const uint32_t size = table->size;
     uint32_t       hash = get_hash(key) % size;
     for (uint32_t i = 0; i < size; ++i) {
         uint32_t   index = (hash + i) % size;
-        ht_item_t* item  = &table->items[index];
+        ht_item_t* item  = &((*table).items[index]);
         if (!item->alive) {
             set_item(item, key, value);
             ++table->count;
-            return;
+            return table;
         } else if (strcmp(item->key, key) == 0) {
             set_item(item, key, value);
-            return;
+            return table;
         }
         ++table->collisions;
     }
+    return table;
 }
 
 void ht_delete(ht_table_t* table, const char* key) {
@@ -103,7 +88,7 @@ void ht_delete(ht_table_t* table, const char* key) {
         uint32_t       hash = (get_hash(key)) % size;
         for (uint32_t i = 0; i < size; ++i) {
             uint32_t   index = (hash + i) % size;
-            ht_item_t* item  = &table->items[index];
+            ht_item_t* item  = &((*table).items[index]);
             if (item == NULL) {
                 return;
             } else if (item->alive && (strcmp(item->key, key) == 0)) {
@@ -115,12 +100,12 @@ void ht_delete(ht_table_t* table, const char* key) {
     }
 }
 
-char* ht_search(const ht_table_t* table, const char* key) {
+char* ht_search(ht_table_t* table, const char* key) {
     if (table->count != 0) {
         const uint32_t size = table->size;
         uint32_t       hash = (get_hash(key)) % size;
         for (uint32_t i = 0; i < size; ++i) {
-            ht_item_t* item = &table->items[(hash + i) % size];
+            ht_item_t* item = &((*table).items[(hash + i) % size]);
             if (item == NULL) {
                 break;
             } else if (item->alive && (strcmp(item->key, key) == 0)) {
@@ -131,7 +116,7 @@ char* ht_search(const ht_table_t* table, const char* key) {
     return NULL;
 }
 
-void ht_pretty_print(const ht_table_t* table) {
+void ht_pretty_print(ht_table_t* table) {
     const uint32_t size = table->size;
     printf(".base       : %u\n"
            ".size       : %u\n"
@@ -145,7 +130,7 @@ void ht_pretty_print(const ht_table_t* table) {
            table->resizes,
            table->collisions);
     for (uint32_t i = 0; i < size; ++i) {
-        ht_item_t* item = &table->items[i];
+        ht_item_t* item = &((*table).items[i]);
         if (!item->alive) {
             printf("    _,\n");
         } else {

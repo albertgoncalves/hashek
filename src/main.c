@@ -19,40 +19,39 @@
     ht_pretty_print(table); \
     printf("\n");
 
-#define BENCH_ITER     10000
-#define NEW_TABLE_BASE 8
-#define WORK(table)                       \
-    {                                     \
-        ht_insert(table, "foo", "bar4");  \
-        ht_insert(table, "bar", "baz");   \
-        ht_insert(table, "baz", "jazz3"); \
-        ht_insert(table, "jazz", "foo");  \
-        ht_insert(table, "FOO", "BAR");   \
-        ht_insert(table, "BAR", "BAZ");   \
-        ht_insert(table, "BAZ", "JAZZ");  \
-        ht_insert(table, "JAZZ", "FOO");  \
-        ht_delete(table, "foo");          \
-        ht_delete(table, "bar");          \
-        ht_delete(table, "baz");          \
-        ht_delete(table, "jazz");         \
-        ht_delete(table, "FOO");          \
-        ht_delete(table, "BAR");          \
-        ht_delete(table, "BAZ");          \
-        ht_delete(table, "JAZZ");         \
+#define BENCH_ITER 100000
+#define WORK(table)                               \
+    {                                             \
+        table = ht_insert(table, "foo", "bar4");  \
+        table = ht_insert(table, "bar", "baz");   \
+        table = ht_insert(table, "baz", "jazz3"); \
+        table = ht_insert(table, "jazz", "foo");  \
+        table = ht_insert(table, "FOO", "BAR");   \
+        table = ht_insert(table, "BAR", "BAZ");   \
+        table = ht_insert(table, "BAZ", "JAZZ");  \
+        table = ht_insert(table, "JAZZ", "FOO");  \
+        ht_delete(table, "foo");                  \
+        ht_delete(table, "bar");                  \
+        ht_delete(table, "baz");                  \
+        ht_delete(table, "jazz");                 \
+        ht_delete(table, "FOO");                  \
+        ht_delete(table, "BAR");                  \
+        ht_delete(table, "BAZ");                  \
+        ht_delete(table, "JAZZ");                 \
     }
 
 int main(void) {
     {
         ht_table_t* table = ht_new(2);
         {
-            ht_insert(table, "foo", "bar");
-            ht_insert(table, "baz", "jazz");
+            table = ht_insert(table, "foo", "bar");
+            table = ht_insert(table, "baz", "jazz");
             PRINT_TABLE(table);
             TEST_KEY_VALUE(table, "foo", "bar");
             TEST_KEY_VALUE(table, "baz", "jazz");
         }
         {
-            ht_insert(table, "foo", "bar2");
+            table = ht_insert(table, "foo", "bar2");
             PRINT_TABLE(table);
             TEST_KEY_VALUE(table, "foo", "bar2");
         }
@@ -62,13 +61,13 @@ int main(void) {
             TEST_KEY_NULL(table, "baz");
         }
         {
-            ht_insert(table, "baz", "jazz2");
+            table = ht_insert(table, "baz", "jazz2");
             PRINT_TABLE(table);
             TEST_KEY_VALUE(table, "baz", "jazz2");
         }
         {
             ht_delete(table, "foo");
-            ht_insert(table, "foo", "bar3");
+            table = ht_insert(table, "foo", "bar3");
             ht_delete(table, "bar");
             ht_delete(table, "baz");
             PRINT_TABLE(table);
@@ -77,14 +76,14 @@ int main(void) {
             TEST_KEY_NULL(table, "baz");
         }
         {
-            ht_insert(table, "foo", "bar4");
-            ht_insert(table, "bar", "baz");
-            ht_insert(table, "baz", "jazz3");
-            ht_insert(table, "jazz", "foo");
-            ht_insert(table, "FOO", "BAR");
-            ht_insert(table, "BAR", "BAZ");
-            ht_insert(table, "BAZ", "JAZZ");
-            ht_insert(table, "JAZZ", "FOO");
+            table = ht_insert(table, "foo", "bar4");
+            table = ht_insert(table, "bar", "baz");
+            table = ht_insert(table, "baz", "jazz3");
+            table = ht_insert(table, "jazz", "foo");
+            table = ht_insert(table, "FOO", "BAR");
+            table = ht_insert(table, "BAR", "BAZ");
+            table = ht_insert(table, "BAZ", "JAZZ");
+            table = ht_insert(table, "JAZZ", "FOO");
             PRINT_TABLE(table);
             TEST_KEY_VALUE(table, "foo", "bar4");
             TEST_KEY_VALUE(table, "bar", "baz");
@@ -95,17 +94,17 @@ int main(void) {
             TEST_KEY_VALUE(table, "BAZ", "JAZZ");
             TEST_KEY_VALUE(table, "JAZZ", "FOO");
         }
-        ht_destroy(table);
+        free(table);
     }
-    BENCH("new, work, destroy", BENCH_ITER, {
-        ht_table_t* table = ht_new(NEW_TABLE_BASE);
+    BENCH("new, work, free", BENCH_ITER, {
+        ht_table_t* table = ht_new(2);
         WORK(table);
-        ht_destroy(table);
+        free(table);
     });
     {
-        ht_table_t* table = ht_new(NEW_TABLE_BASE);
+        ht_table_t* table = ht_new(8);
         BENCH("work only", BENCH_ITER, WORK(table));
-        ht_destroy(table);
+        free(table);
     }
     return EXIT_SUCCESS;
 }
