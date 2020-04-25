@@ -29,41 +29,9 @@ static void set_item(ht_item_t* item, const char* key, const char* value) {
     item->alive = true;
 }
 
-ht_table_t* ht_new(uint32_t new_base) {
-    const uint32_t base = new_base < BASE_MIN ? BASE_MIN : new_base;
-    const uint32_t size = next_prime(base);
-    ht_table_t*    table =
-        calloc(sizeof(ht_table_t) + (sizeof(ht_item_t) * size), 1);
-    EXIT_IF(table == NULL);
-    table->base = base;
-    table->size = size;
-    return table;
-}
-
-static ht_table_t* resize(ht_table_t* table, uint32_t base) {
-    EXIT_IF(base <= table->base);
-    ht_table_t*    new_table    = ht_new(base);
-    const uint32_t size         = table->size;
-    const uint32_t count        = table->count;
-    uint32_t       insert_count = 0;
-    for (uint32_t i = 0; i < size; ++i) {
-        ht_item_t* item = &((*table).items[i]);
-        if (item->alive) {
-            new_table = ht_insert(new_table, item->key, item->value);
-            if (count <= ++insert_count) {
-                break;
-            }
-        }
-    }
-    new_table->resizes = table->resizes + 1;
-    free(table);
-    return new_table;
-}
-
-ht_table_t* ht_insert(ht_table_t* table, const char* key, const char* value) {
-    if (RESIZE_UP < ((table->count * 100) / table->size)) {
-        table = resize(table, table->base << 1);
-    }
+static ht_table_t* insert(ht_table_t* table,
+                          const char* key,
+                          const char* value) {
     const uint32_t size = table->size;
     uint32_t       hash = get_hash(key) % size;
     for (uint32_t i = 0; i < size; ++i) {
@@ -80,6 +48,44 @@ ht_table_t* ht_insert(ht_table_t* table, const char* key, const char* value) {
         ++table->collisions;
     }
     return table;
+}
+
+ht_table_t* ht_new(uint32_t base) {
+    const uint32_t new_base = base < BASE_MIN ? BASE_MIN : base;
+    const uint32_t new_size = next_prime(base);
+    ht_table_t*    table =
+        calloc(sizeof(ht_table_t) + (sizeof(ht_item_t) * new_size), 1);
+    EXIT_IF(table == NULL);
+    table->base = new_base;
+    table->size = new_size;
+    return table;
+}
+
+static ht_table_t* resize(ht_table_t* table, uint32_t base) {
+    EXIT_IF(base <= table->base);
+    ht_table_t*    new_table    = ht_new(base);
+    const uint32_t size         = table->size;
+    const uint32_t count        = table->count;
+    uint32_t       insert_count = 0;
+    for (uint32_t i = 0; i < size; ++i) {
+        ht_item_t* item = &((*table).items[i]);
+        if (item->alive) {
+            new_table = insert(new_table, item->key, item->value);
+            if (count <= ++insert_count) {
+                break;
+            }
+        }
+    }
+    new_table->resizes = table->resizes + 1;
+    free(table);
+    return new_table;
+}
+
+ht_table_t* ht_insert(ht_table_t* table, const char* key, const char* value) {
+    if (RESIZE_UP < ((table->count * 100) / table->size)) {
+        table = resize(table, table->base << 1);
+    }
+    return insert(table, key, value);
 }
 
 void ht_delete(ht_table_t* table, const char* key) {
