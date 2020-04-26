@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-uint32_t next_prime(uint32_t x);
+uint32_t next_prime(uint32_t);
 
 #endif
