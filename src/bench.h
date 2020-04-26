@@ -26,9 +26,9 @@
             clock_gettime(CLOCK_MONOTONIC, &mono_end);            \
             clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &proc_end);   \
         })                                                        \
-        int64_t mono_ns     = TIME_TO_NS(mono_start, mono_end);   \
-        int64_t proc_ns     = TIME_TO_NS(proc_start, proc_end);   \
-        double  m           = (double)n;                          \
+        int64_t mono_ns = TIME_TO_NS(mono_start, mono_end);       \
+        int64_t proc_ns = TIME_TO_NS(proc_start, proc_end);       \
+        double  m = (double)n;                                    \
         double  mono_ns_per = (double)mono_ns / m;                \
         double  proc_ns_per = (double)proc_ns / m;                \
         printf("\n%s%-28s%s\n"                                    \

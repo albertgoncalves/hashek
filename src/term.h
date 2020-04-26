@@ -15,17 +15,17 @@
 /* NOTE: See `https://stackoverflow.com/a/13498238`. */
 
 #define DEV_NULL "/dev/null"
-#define SUPPRESS_STDOUT(block)                       \
-    {                                                \
-        fflush(stdout);                              \
-        int   restore_stdout = dup(fileno(stdout));  \
-        FILE* null_stdout    = fopen(DEV_NULL, "w"); \
-        EXIT_IF(null_stdout == NULL);                \
-        dup2(fileno(null_stdout), fileno(stdout));   \
-        block;                                       \
-        fflush(stdout);                              \
-        fclose(null_stdout);                         \
-        dup2(restore_stdout, fileno(stdout));        \
+#define SUPPRESS_STDOUT(block)                      \
+    {                                               \
+        fflush(stdout);                             \
+        int   restore_stdout = dup(fileno(stdout)); \
+        FILE* null_stdout = fopen(DEV_NULL, "w");   \
+        EXIT_IF(null_stdout == NULL);               \
+        dup2(fileno(null_stdout), fileno(stdout));  \
+        block;                                      \
+        fflush(stdout);                             \
+        fclose(null_stdout);                        \
+        dup2(restore_stdout, fileno(stdout));       \
     }
 
 #endif

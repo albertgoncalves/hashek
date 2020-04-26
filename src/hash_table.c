@@ -36,7 +36,7 @@ static ht_table_t* insert(ht_table_t* table,
     uint32_t       hash = get_hash(key) % size;
     for (uint32_t i = 0; i < size; ++i) {
         uint32_t   index = (hash + i) % size;
-        ht_item_t* item  = &((*table).items[index]);
+        ht_item_t* item = &((*table).items[index]);
         if (!item->alive) {
             set_item(item, key, value);
             ++table->count;
@@ -63,9 +63,9 @@ ht_table_t* ht_new(uint32_t base) {
 
 static ht_table_t* resize(ht_table_t* table, uint32_t base) {
     EXIT_IF(base <= table->base);
-    ht_table_t*    new_table    = ht_new(base);
-    const uint32_t size         = table->size;
-    const uint32_t count        = table->count;
+    ht_table_t*    new_table = ht_new(base);
+    const uint32_t size = table->size;
+    const uint32_t count = table->count;
     uint32_t       insert_count = 0;
     for (uint32_t i = 0; i < size; ++i) {
         ht_item_t* item = &((*table).items[i]);
@@ -94,7 +94,7 @@ void ht_delete(ht_table_t* table, const char* key) {
         uint32_t       hash = (get_hash(key)) % size;
         for (uint32_t i = 0; i < size; ++i) {
             uint32_t   index = (hash + i) % size;
-            ht_item_t* item  = &((*table).items[index]);
+            ht_item_t* item = &((*table).items[index]);
             if (item == NULL) {
                 return;
             } else if (item->alive && (strcmp(item->key, key) == 0)) {
