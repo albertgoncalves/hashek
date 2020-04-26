@@ -49,7 +49,6 @@ export FLAGS=(
     -Wunused \
     -Wunused-macros \
     -Wwrite-strings
-
 )
 
 build_all () {
