@@ -54,7 +54,7 @@ ht_table_t* ht_new(uint32_t base) {
     const uint32_t new_base = base < BASE_MIN ? BASE_MIN : base;
     const uint32_t new_size = next_prime(base);
     ht_table_t*    table =
-        calloc(sizeof(ht_table_t) + (sizeof(ht_item_t) * new_size), 1);
+        calloc(1, sizeof(ht_table_t) + (sizeof(ht_item_t) * new_size));
     EXIT_IF(table == NULL);
     table->base = new_base;
     table->size = new_size;
